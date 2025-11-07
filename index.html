@@ -713,6 +713,24 @@
             pointer-events: none;
             animation: sparkle 0.8s forwards;
         }
+        
+        /* สถานะการเปิดประตู */
+        .gate-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .gate-open {
+            background-color: #2a7a2a;
+            color: #e0d0a0;
+        }
+        
+        .gate-closed {
+            background-color: #7a2a2a;
+            color: #e0d0a0;
+        }
     </style>
 </head>
 <body>
@@ -763,13 +781,17 @@
             
             <div class="dashboard-card fade-in">
                 <h3>ควบคุมประตูมิติ</h3>
-                <p>สถานะประตูมิติที่ 1: <span id="base1-status">ปิด</span></p>
+                <p>สถานะประตูมิติที่ 1: 
+                    <span id="base1-status" class="gate-status gate-closed">ปิด</span>
+                </p>
                 <div class="control-buttons">
                     <button id="open-base1" class="control-btn open-btn">เปิดประตูที่ 1</button>
                     <button id="close-base1" class="control-btn close-btn">ปิดประตูที่ 1</button>
                 </div>
                 
-                <p>สถานะประตูมิติที่ 2: <span id="base2-status">ปิด</span></p>
+                <p>สถานะประตูมิติที่ 2: 
+                    <span id="base2-status" class="gate-status gate-closed">ปิด</span>
+                </p>
                 <div class="control-buttons">
                     <button id="open-base2" class="control-btn open-btn">เปิดประตูที่ 2</button>
                     <button id="close-base2" class="control-btn close-btn">ปิดประตูที่ 2</button>
@@ -801,6 +823,7 @@
             <p>ภารกิจ: คุณจะได้รับจดหมายเวทมนตร์ 30 ฉบับ แต่ละฉบับจะปรากฏเพียง 5 วินาที</p>
             <p>คุณต้องระบุว่าจดหมายฉบับนั้นเป็นของใคร: ลูกค้า, ธนาคาร/องค์กร หรือ ผู้ขาย/ผู้นำเสนอ</p>
             <p>คะแนนจะคำนวณจากความถูกต้องและความรวดเร็วในการตอบ</p>
+            <p id="base1-access-message" class="gate-status gate-closed">ประตูมิติที่ 1 ยังปิดอยู่</p>
         </div>
         <button id="start-base1" class="start-btn" disabled>เปิดจดหมายเวท</button>
     </div>
@@ -841,6 +864,7 @@
             <p>ตัวเลือกที่ 1: คำพูดที่ทำให้รู้สึกอึดอัด/กดดัน</p>
             <p>ตัวเลือกที่ 2: คำพูดที่ทำให้รู้สึกผ่อนคลาย</p>
             <p>10 ข้อแรกมีเวลา 10 วินาที, ข้อ 11-15 มีเวลา 8 วินาที, ข้อ 16-20 มีเวลา 5 วินาที</p>
+            <p id="base2-access-message" class="gate-status gate-closed">ประตูมิติที่ 2 ยังปิดอยู่</p>
         </div>
         <button id="start-base2" class="start-btn" disabled>เริ่มภารกิจที่ 2</button>
     </div>
@@ -934,6 +958,10 @@
         let timeLeft;
         let playerName = '';
         let players = []; // เก็บข้อมูลผู้เล่นทั้งหมด
+        
+        // สถานะการเปิดประตู
+        let base1Open = false;
+        let base2Open = false;
 
         // ฟังก์ชันสร้างประกายไฟ
         function createSparkle(x, y) {
@@ -977,6 +1005,9 @@
             document.getElementById(screenId).classList.remove('hidden');
             currentScreen = screenId;
             
+            // อัพเดทสถานะปุ่มเริ่มเกมตามสถานะประตู
+            updateStartButtons();
+            
             // เพิ่มประกายไฟเมื่อเปลี่ยนหน้า
             if (screenId !== 'role-selection') {
                 for (let i = 0; i < 5; i++) {
@@ -990,8 +1021,48 @@
             }
         }
 
+        // ฟังก์ชันอัพเดทสถานะปุ่มเริ่มเกม
+        function updateStartButtons() {
+            // อัพเดทปุ่มเริ่มฐานที่ 1
+            const startBase1Button = document.getElementById('start-base1');
+            const base1AccessMessage = document.getElementById('base1-access-message');
+            
+            if (startBase1Button && base1AccessMessage) {
+                if (base1Open) {
+                    startBase1Button.disabled = false;
+                    base1AccessMessage.textContent = "ประตูมิติที่ 1 เปิดแล้ว!";
+                    base1AccessMessage.className = "gate-status gate-open";
+                } else {
+                    startBase1Button.disabled = true;
+                    base1AccessMessage.textContent = "ประตูมิติที่ 1 ยังปิดอยู่";
+                    base1AccessMessage.className = "gate-status gate-closed";
+                }
+            }
+            
+            // อัพเดทปุ่มเริ่มฐานที่ 2
+            const startBase2Button = document.getElementById('start-base2');
+            const base2AccessMessage = document.getElementById('base2-access-message');
+            
+            if (startBase2Button && base2AccessMessage) {
+                if (base2Open) {
+                    startBase2Button.disabled = false;
+                    base2AccessMessage.textContent = "ประตูมิติที่ 2 เปิดแล้ว!";
+                    base2AccessMessage.className = "gate-status gate-open";
+                } else {
+                    startBase2Button.disabled = true;
+                    base2AccessMessage.textContent = "ประตูมิติที่ 2 ยังปิดอยู่";
+                    base2AccessMessage.className = "gate-status gate-closed";
+                }
+            }
+        }
+
         // ฟังก์ชันเริ่มต้นเกมฐานที่ 1
         function startBase1Game() {
+            if (!base1Open) {
+                alert("ประตูมิติที่ 1 ยังปิดอยู่! กรุณารอให้โฮสเปิดประตูก่อน");
+                return;
+            }
+            
             currentQuestionIndex = 0;
             playerScoreBase1 = 0;
             correctAnswersBase1 = 0;
@@ -1049,6 +1120,11 @@
 
         // ฟังก์ชันเริ่มต้นเกมฐานที่ 2
         function startBase2Game() {
+            if (!base2Open) {
+                alert("ประตูมิติที่ 2 ยังปิดอยู่! กรุณารอให้โฮสเปิดประตูก่อน");
+                return;
+            }
+            
             currentQuestionIndex = 0;
             playerScoreBase2 = 0;
             correctAnswersBase2 = 0;
@@ -1238,9 +1314,14 @@
             }
         });
 
+        // ควบคุมประตูฐานที่ 1
         document.getElementById('open-base1').addEventListener('click', () => {
+            base1Open = true;
             document.getElementById('base1-status').textContent = 'เปิด';
-            document.getElementById('start-base1').disabled = false;
+            document.getElementById('base1-status').className = 'gate-status gate-open';
+            
+            // อัพเดทปุ่มเริ่มเกมฐานที่ 1
+            updateStartButtons();
             
             // เพิ่มประกายไฟเมื่อเปิดฐาน
             for (let i = 0; i < 3; i++) {
@@ -1254,13 +1335,22 @@
         });
 
         document.getElementById('close-base1').addEventListener('click', () => {
+            base1Open = false;
             document.getElementById('base1-status').textContent = 'ปิด';
-            document.getElementById('start-base1').disabled = true;
+            document.getElementById('base1-status').className = 'gate-status gate-closed';
+            
+            // อัพเดทปุ่มเริ่มเกมฐานที่ 1
+            updateStartButtons();
         });
 
+        // ควบคุมประตูฐานที่ 2
         document.getElementById('open-base2').addEventListener('click', () => {
+            base2Open = true;
             document.getElementById('base2-status').textContent = 'เปิด';
-            document.getElementById('start-base2').disabled = false;
+            document.getElementById('base2-status').className = 'gate-status gate-open';
+            
+            // อัพเดทปุ่มเริ่มเกมฐานที่ 2
+            updateStartButtons();
             
             // เพิ่มประกายไฟเมื่อเปิดฐาน
             for (let i = 0; i < 3; i++) {
@@ -1274,8 +1364,12 @@
         });
 
         document.getElementById('close-base2').addEventListener('click', () => {
+            base2Open = false;
             document.getElementById('base2-status').textContent = 'ปิด';
-            document.getElementById('start-base2').disabled = true;
+            document.getElementById('base2-status').className = 'gate-status gate-closed';
+            
+            // อัพเดทปุ่มเริ่มเกมฐานที่ 2
+            updateStartButtons();
         });
 
         document.getElementById('start-base1').addEventListener('click', startBase1Game);

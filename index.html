@@ -869,6 +869,8 @@
         let timeLeft;
         let playerName = '';
         let players = JSON.parse(localStorage.getItem('treasureGamePlayers')) || [];
+        let commandCheckInterval;
+        let statusUpdateInterval;
 
         // ฟังก์ชันเปลี่ยนหน้าจอ
         function showScreen(screenId) {
@@ -1175,7 +1177,8 @@
                 showScreen('admin-dashboard');
                 
                 // เริ่มต้นการอัพเดทสถานะผู้เล่น
-                setInterval(updatePlayerStatus, 2000);
+                if (statusUpdateInterval) clearInterval(statusUpdateInterval);
+                statusUpdateInterval = setInterval(updatePlayerStatus, 2000);
             } else {
                 alert('ชื่อผู้ใช้เวทหรือรหัสผ่านเวทไม่ถูกต้อง');
             }
@@ -1197,7 +1200,8 @@
                 showScreen('base1-loading');
                 
                 // เริ่มต้นการตรวจสอบคำสั่งจากแอดมิน
-                setInterval(checkAdminCommands, 1000);
+                if (commandCheckInterval) clearInterval(commandCheckInterval);
+                commandCheckInterval = setInterval(checkAdminCommands, 1000);
             } else {
                 alert('กรุณาระบุชื่อของคุณ');
             }
@@ -1270,6 +1274,18 @@
             const savedScreen = localStorage.getItem('treasureGameCurrentScreen');
             if (savedScreen) {
                 showScreen(savedScreen);
+                
+                // ถ้าเป็นผู้เล่น ให้เริ่มตรวจสอบคำสั่ง
+                if (savedScreen !== 'role-selection' && savedScreen !== 'host-login' && savedScreen !== 'admin-dashboard') {
+                    if (commandCheckInterval) clearInterval(commandCheckInterval);
+                    commandCheckInterval = setInterval(checkAdminCommands, 1000);
+                }
+                
+                // ถ้าเป็นแอดมิน ให้เริ่มอัพเดทสถานะ
+                if (savedScreen === 'admin-dashboard') {
+                    if (statusUpdateInterval) clearInterval(statusUpdateInterval);
+                    statusUpdateInterval = setInterval(updatePlayerStatus, 2000);
+                }
             }
         });
     </script>

@@ -233,8 +233,8 @@
             box-shadow: 0 0 15px rgba(139, 92, 246, 0.8);
         }
         
-        /* สไตล์หน้าผู้เล่นใส่ Passcode */
-        .player-passcode {
+        /* สไตล์หน้าผู้เล่นใส่ชื่อ */
+        .player-name {
             text-align: center;
             margin-top: 150px;
             position: relative;
@@ -256,13 +256,13 @@
             100% { transform: scaleY(1); opacity: 1; }
         }
         
-        .player-passcode h2 {
+        .player-name h2 {
             margin-bottom: 30px;
             font-size: 2.2rem;
             color: #5d4a1a;
         }
         
-        .passcode-input {
+        .name-input {
             padding: 15px;
             font-size: 1.3rem;
             border-radius: 5px;
@@ -273,28 +273,6 @@
             margin-bottom: 30px;
             text-align: center;
             box-shadow: 0 0 10px rgba(93, 74, 26, 0.5);
-        }
-        
-        /* สไตล์การแสดงรหัสผ่านในแดชบอร์ด */
-        .passcode-display {
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-            color: #ffd700;
-            text-shadow: 0 0 10px #ffd700;
-            letter-spacing: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid #8a6d32;
-        }
-        
-        .passcode-info {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 1.1rem;
-            color: #e0d0a0;
         }
         
         /* สไตล์หน้าจอโหลด */
@@ -375,6 +353,17 @@
             margin-bottom: 30px;
             text-shadow: 0 0 10px #8a6d32;
             color: #f4e4a6;
+        }
+        
+        .player-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid #8a6d32;
+            box-shadow: 0 0 10px rgba(100, 80, 200, 0.5);
         }
         
         .question-container {
@@ -554,11 +543,6 @@
             color: #e0d0a0;
         }
         
-        .generate-btn {
-            background: linear-gradient(145deg, #2a5a7a, #1a3a5a);
-            color: #e0d0a0;
-        }
-        
         .ranking-btn {
             background: linear-gradient(145deg, #7a5a2a, #5a3a1a);
             color: #e0d0a0;
@@ -729,38 +713,11 @@
             pointer-events: none;
             animation: sparkle 0.8s forwards;
         }
-        
-        /* สไตล์สำหรับข้อความผิดพลาด */
-        .error-message {
-            color: #ff5555;
-            text-shadow: 0 0 5px #ff0000;
-            margin-top: 10px;
-            font-size: 1.1rem;
-            display: none;
-        }
-        
-        .debug-info {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            z-index: 1000;
-        }
     </style>
 </head>
 <body>
     <!-- เอฟเฟกต์ประกายไฟ -->
     <div id="sparkles-container"></div>
-
-    <!-- ข้อมูลดีบัก (สำหรับตรวจสอบปัญหา) -->
-    <div class="debug-info" id="debug-info" style="display: none;">
-        <div>รหัสผ่านปัจจุบัน: <span id="debug-passcode">-</span></div>
-        <div>รหัสผ่านที่ป้อน: <span id="debug-input">-</span></div>
-    </div>
 
     <!-- หน้าเลือกบทบาท -->
     <div id="role-selection" class="role-selection fade-in">
@@ -799,11 +756,9 @@
         
         <div class="dashboard-cards">
             <div class="dashboard-card fade-in">
-                <h3>จัดการรหัสผ่านเวท</h3>
-                <p>รหัสผ่านเวทปัจจุบัน:</p>
-                <div class="passcode-display" id="current-passcode">-</div>
-                <p class="passcode-info">รหัสผ่านนี้จะใช้ได้จนกว่าจะสร้างรหัสใหม่หรือรีเฟรชหน้า</p>
-                <button id="generate-passcode" class="control-btn generate-btn">สร้างรหัสผ่านเวทใหม่</button>
+                <h3>ข้อมูลระบบ</h3>
+                <p>ยินดีต้อนรับสู่แท่นควบคุมเวทมนตร์</p>
+                <p>ผู้เล่นสามารถเข้าร่วมเกมได้โดยระบุชื่อ</p>
             </div>
             
             <div class="dashboard-card fade-in">
@@ -824,18 +779,16 @@
             <div class="dashboard-card fade-in">
                 <h3>จารึกอันดับนักผจญภัย</h3>
                 <button id="show-ranking" class="control-btn ranking-btn">แสดงจารึกอันดับ</button>
-                <button id="toggle-debug" class="control-btn">เปิด/ปิดโหมดดีบัก</button>
             </div>
         </div>
     </div>
 
-    <!-- หน้าผู้เล่นใส่ Passcode -->
-    <div id="player-passcode" class="player-passcode hidden">
+    <!-- หน้าผู้เล่นใส่ชื่อ -->
+    <div id="player-name" class="player-name hidden">
         <div class="ancient-scroll fade-in">
-            <h2>กรอกรหัสผ่านเวท</h2>
-            <p>ป้อนรหัสผ่านเวทที่เป็นตัวเลข 6 หลัก</p>
-            <input type="text" id="passcode-input" class="passcode-input" placeholder="กรอกรหัสผ่านเวท (ตัวเลข 6 หลัก)" maxlength="6" pattern="[0-9]*" inputmode="numeric">
-            <div class="error-message" id="passcode-error">รหัสผ่านเวทต้องเป็นตัวเลข 6 หลักเท่านั้น</div>
+            <h2>ประกาศตนนักผจญภัย</h2>
+            <p>กรุณาระบุชื่อของคุณเพื่อเริ่มการผจญภัย</p>
+            <input type="text" id="name-input" class="name-input" placeholder="กรอกชื่อนักผจญภัย">
             <br>
             <button id="join-game" class="submit-btn">เริ่มการผจญภัย</button>
         </div>
@@ -854,6 +807,9 @@
 
     <!-- เกมฐานที่ 1 -->
     <div id="base1-game" class="game-screen hidden">
+        <div class="player-info">
+            <p>นักผจญภัย: <span id="current-player-name">-</span></p>
+        </div>
         <h2>ภารกิจที่ 1: จดหมายเวทมนตร์</h2>
         <div class="question-container">
             <div class="timer" id="base1-timer">5</div>
@@ -870,6 +826,7 @@
     <div id="base1-score" class="score-screen hidden">
         <div class="score-card fade-in">
             <h2>คะแนนภารกิจที่ 1</h2>
+            <p>นักผจญภัย: <strong id="score-player-name">-</strong></p>
             <div class="player-score" id="base1-player-score">0</div>
             <p>คุณตอบถูก <span id="base1-correct">0</span> จาก 30 ฉบับ</p>
             <button id="go-to-base2" class="start-btn">ไปยังภารกิจที่ 2</button>
@@ -890,6 +847,9 @@
 
     <!-- เกมฐานที่ 2 -->
     <div id="base2-game" class="game-screen hidden">
+        <div class="player-info">
+            <p>นักผจญภัย: <span id="current-player-name2">-</span></p>
+        </div>
         <h2>ภารกิจที่ 2: คำพูดวิเศษ</h2>
         <div class="question-container">
             <div class="timer" id="base2-timer">10</div>
@@ -905,6 +865,7 @@
     <div id="base2-score" class="score-screen hidden">
         <div class="score-card fade-in">
             <h2>คะแนนภารกิจที่ 2</h2>
+            <p>นักผจญภัย: <strong id="score-player-name2">-</strong></p>
             <div class="player-score" id="base2-player-score">0</div>
             <p>คุณตอบถูก <span id="base2-correct">0</span> จาก 20 ประโยค</p>
         </div>
@@ -972,8 +933,7 @@
         let timerInterval;
         let timeLeft;
         let playerName = '';
-        let currentPasscode = '';
-        let debugMode = false;
+        let players = []; // เก็บข้อมูลผู้เล่นทั้งหมด
 
         // ฟังก์ชันสร้างประกายไฟ
         function createSparkle(x, y) {
@@ -1010,7 +970,7 @@
 
         // ฟังก์ชันเปลี่ยนหน้าจอ
         function showScreen(screenId) {
-            document.querySelectorAll('div[id$="-screen"], div[id$="-loading"], div[id$="-game"], div[id$="-score"], div[id$="-login"], div[id$="-passcode"], div[id$="-dashboard"]').forEach(screen => {
+            document.querySelectorAll('div[id$="-screen"], div[id$="-loading"], div[id$="-game"], div[id$="-score"], div[id$="-login"], div[id$="-name"], div[id$="-dashboard"]').forEach(screen => {
                 screen.classList.add('hidden');
             });
             
@@ -1067,8 +1027,13 @@
         // จบเกมฐานที่ 1
         function endBase1Game() {
             clearInterval(timerInterval);
+            
+            // อัพเดทคะแนนผู้เล่น
+            updatePlayerScore();
+            
             document.getElementById('base1-player-score').textContent = playerScoreBase1;
             document.getElementById('base1-correct').textContent = correctAnswersBase1;
+            document.getElementById('score-player-name').textContent = playerName;
             showScreen('base1-score');
             
             // เพิ่มประกายไฟ庆祝
@@ -1127,8 +1092,13 @@
         // จบเกมฐานที่ 2
         function endBase2Game() {
             clearInterval(timerInterval);
+            
+            // อัพเดทคะแนนผู้เล่น
+            updatePlayerScore();
+            
             document.getElementById('base2-player-score').textContent = playerScoreBase2;
             document.getElementById('base2-correct').textContent = correctAnswersBase2;
+            document.getElementById('score-player-name2').textContent = playerName;
             showScreen('base2-score');
             
             // เพิ่มประกายไฟ庆祝
@@ -1159,68 +1129,54 @@
             }, 1000);
         }
 
-        // ฟังก์ชันสร้าง Passcode (เฉพาะตัวเลข)
-        function generatePasscode() {
-            const digits = '0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += digits.charAt(Math.floor(Math.random() * digits.length));
-            }
-            currentPasscode = result;
-            document.getElementById('current-passcode').textContent = currentPasscode;
+        // ฟังก์ชันอัพเดทคะแนนผู้เล่น
+        function updatePlayerScore() {
+            // ค้นหาผู้เล่นในรายการ
+            let playerIndex = players.findIndex(p => p.name === playerName);
             
-            // อัพเดทข้อมูลดีบัก
-            if (debugMode) {
-                document.getElementById('debug-passcode').textContent = currentPasscode;
+            if (playerIndex === -1) {
+                // ถ้าไม่พบผู้เล่น ให้เพิ่มใหม่
+                players.push({
+                    name: playerName,
+                    score1: playerScoreBase1,
+                    score2: playerScoreBase2,
+                    total: playerScoreBase1 + playerScoreBase2
+                });
+            } else {
+                // อัพเดทคะแนนผู้เล่นที่มีอยู่
+                players[playerIndex].score1 = playerScoreBase1;
+                players[playerIndex].score2 = playerScoreBase2;
+                players[playerIndex].total = playerScoreBase1 + playerScoreBase2;
             }
-            
-            // เพิ่มประกายไฟเมื่อสร้างพาสโค้ด
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => {
-                    createSparkle(
-                        Math.random() * window.innerWidth,
-                        Math.random() * window.innerHeight
-                    );
-                }, i * 200);
-            }
-            
-            alert(`รหัสผ่านเวทใหม่: ${currentPasscode}`);
-        }
-
-        // ฟังก์ชันตรวจสอบรหัสผ่าน
-        function validatePasscode(passcode) {
-            // ตรวจสอบว่าเป็นตัวเลข 6 หลัก
-            const regex = /^\d{6}$/;
-            return regex.test(passcode);
         }
 
         // ฟังก์ชันแสดงอันดับ
         function showRanking() {
-            // ข้อมูลผู้เล่นตัวอย่าง
-            const players = [
-                { name: 'นักเวทแห่งขุนเขา', score1: 850, score2: 720, total: 1570 },
-                { name: 'จอมเวทมิตรแท้', score1: 790, score2: 680, total: 1470 },
-                { name: 'แม่มดผู้รอบรู้', score1: 720, score2: 650, total: 1370 },
-                { name: 'นักรบเวทมนตร์', score1: 680, score2: 620, total: 1300 },
-                { name: 'ผู้เรียนรู้ศาสตร์', score1: 650, score2: 600, total: 1250 },
-            ];
-            
             const rankingBody = document.getElementById('ranking-body');
             rankingBody.innerHTML = '';
             
-            players.sort((a, b) => b.total - a.total);
+            // เรียงลำดับตามคะแนนรวม
+            const sortedPlayers = [...players].sort((a, b) => b.total - a.total);
             
-            players.forEach((player, index) => {
+            if (sortedPlayers.length === 0) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${player.name}</td>
-                    <td>${player.score1}</td>
-                    <td>${player.score2}</td>
-                    <td>${player.total}</td>
+                    <td colspan="5">ยังไม่มีผู้เล่นเข้าร่วมเกม</td>
                 `;
                 rankingBody.appendChild(row);
-            });
+            } else {
+                sortedPlayers.forEach((player, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${player.name}</td>
+                        <td>${player.score1}</td>
+                        <td>${player.score2}</td>
+                        <td>${player.total}</td>
+                    `;
+                    rankingBody.appendChild(row);
+                });
+            }
             
             showScreen('ranking-screen');
             
@@ -1235,25 +1191,13 @@
             }
         }
 
-        // ฟังก์ชันเปิด/ปิดโหมดดีบัก
-        function toggleDebugMode() {
-            debugMode = !debugMode;
-            const debugInfo = document.getElementById('debug-info');
-            if (debugMode) {
-                debugInfo.style.display = 'block';
-                document.getElementById('debug-passcode').textContent = currentPasscode;
-            } else {
-                debugInfo.style.display = 'none';
-            }
-        }
-
         // การตั้งค่า Event Listeners
         document.getElementById('host-btn').addEventListener('click', () => {
             showScreen('host-login');
         });
 
         document.getElementById('player-btn').addEventListener('click', () => {
-            showScreen('player-passcode');
+            showScreen('player-name');
         });
 
         document.getElementById('host-login-btn').addEventListener('click', () => {
@@ -1263,77 +1207,36 @@
             // ตรวจสอบล็อกอิน (ในเวอร์ชันจริงควรตรวจสอบกับฐานข้อมูล)
             if (username === 'admin' && password === 'admin') {
                 showScreen('admin-dashboard');
-                // สร้างรหัสผ่านทันทีเมื่อล็อกอินสำเร็จ
-                generatePasscode();
             } else {
                 alert('ชื่อผู้ใช้เวทหรือรหัสผ่านเวทไม่ถูกต้อง');
             }
         });
 
-        // จำกัด input ให้เป็นตัวเลขเท่านั้น
-        document.getElementById('passcode-input').addEventListener('input', function(e) {
-            // เอาเฉพาะตัวเลข
-            this.value = this.value.replace(/[^0-9]/g, '');
-            
-            // ตรวจสอบความยาว
-            if (this.value.length > 6) {
-                this.value = this.value.slice(0, 6);
-            }
-            
-            // อัพเดทข้อมูลดีบัก
-            if (debugMode) {
-                document.getElementById('debug-input').textContent = this.value;
-            }
-            
-            // ซ่อนข้อความผิดพลาดถ้ารหัสผ่านถูกต้อง
-            const errorElement = document.getElementById('passcode-error');
-            if (validatePasscode(this.value)) {
-                errorElement.style.display = 'none';
-            } else {
-                errorElement.style.display = 'block';
-            }
-        });
-
         document.getElementById('join-game').addEventListener('click', () => {
-            const passcode = document.getElementById('passcode-input').value;
+            const name = document.getElementById('name-input').value.trim();
             
-            // อัพเดทข้อมูลดีบัก
-            if (debugMode) {
-                document.getElementById('debug-input').textContent = passcode;
-            }
-            
-            if (validatePasscode(passcode)) {
-                // ตรวจสอบว่ามีการสร้างรหัสผ่านแล้วหรือไม่
-                if (!currentPasscode || currentPasscode === '-') {
-                    alert('ยังไม่มีรหัสผ่านเวท กรุณาให้โฮสสร้างรหัสผ่านก่อน');
-                    return;
-                }
+            if (name) {
+                playerName = name;
                 
-                if (passcode === currentPasscode) {
-                    playerName = `นักผจญภัยแห่งโชคชะตา ${Math.floor(Math.random() * 1000)}`;
-                    showScreen('base1-loading');
-                    
-                    // เพิ่มประกายไฟเมื่อเข้าร่วมเกม
-                    for (let i = 0; i < 5; i++) {
-                        setTimeout(() => {
-                            createSparkle(
-                                Math.random() * window.innerWidth,
-                                Math.random() * window.innerHeight
-                            );
-                        }, i * 200);
-                    }
-                } else {
-                    alert('รหัสผ่านเวทไม่ถูกต้อง');
-                    if (debugMode) {
-                        console.log('รหัสผ่านที่ป้อน:', passcode, 'รหัสผ่านปัจจุบัน:', currentPasscode);
-                    }
+                // แสดงชื่อผู้เล่นในเกม
+                document.getElementById('current-player-name').textContent = playerName;
+                document.getElementById('current-player-name2').textContent = playerName;
+                
+                showScreen('base1-loading');
+                
+                // เพิ่มประกายไฟเมื่อเข้าร่วมเกม
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        createSparkle(
+                            Math.random() * window.innerWidth,
+                            Math.random() * window.innerHeight
+                        );
+                    }, i * 200);
                 }
             } else {
-                alert('รหัสผ่านเวทต้องเป็นตัวเลข 6 หลักเท่านั้น');
+                alert('กรุณาระบุชื่อของคุณ');
             }
         });
-
-        document.getElementById('generate-passcode').addEventListener('click', generatePasscode);
 
         document.getElementById('open-base1').addEventListener('click', () => {
             document.getElementById('base1-status').textContent = 'เปิด';
@@ -1384,8 +1287,6 @@
         });
 
         document.getElementById('show-ranking').addEventListener('click', showRanking);
-
-        document.getElementById('toggle-debug').addEventListener('click', toggleDebugMode);
 
         // จัดการการตอบคำถาม
         document.querySelectorAll('.answer-btn').forEach(button => {

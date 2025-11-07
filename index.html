@@ -559,8 +559,47 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .fade-in {
             animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* การแจ้งเตือน */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(145deg, #2a7a2a, #1a5a1a);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,255,0,0.5);
+            border: 2px solid #8a6d32;
+            animation: slideIn 0.5s ease-out;
+            max-width: 300px;
+        }
+        
+        /* ปุ่มรีเฟรชสถานะ */
+        .refresh-btn {
+            background: linear-gradient(145deg, #2a5a7a, #1a3a5a);
+            color: #e0d0a0;
+            border: 1px solid #8a6d32;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 1rem;
         }
         
         /* สไตล์ส่วนที่ซ่อน */
@@ -602,6 +641,13 @@
                 padding: 12px;
                 min-height: 50px;
                 font-size: 1rem;
+            }
+            
+            .notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
             }
         }
         
@@ -672,6 +718,7 @@
                     <h3>ข้อมูลระบบ</h3>
                     <p>ยินดีต้อนรับสู่แท่นควบคุมเวทมนตร์</p>
                     <p>ผู้เล่นสามารถเข้าร่วมเกมได้โดยระบุชื่อ</p>
+                    <p>สถานะผู้เล่น: <span id="player-status" class="gate-status gate-closed">ยังไม่มีผู้เล่น</span></p>
                 </div>
                 
                 <div class="dashboard-card fade-in">
@@ -719,6 +766,7 @@
                 <p>คุณต้องระบุว่าจดหมายฉบับนั้นเป็นของใคร: ลูกค้า, ธนาคาร/องค์กร หรือ ผู้ขาย/ผู้นำเสนอ</p>
                 <p>คะแนนจะคำนวณจากความถูกต้องและความรวดเร็วในการตอบ</p>
                 <p id="base1-access-message" class="gate-status gate-closed">ประตูมิติที่ 1 ยังปิดอยู่</p>
+                <button id="refresh-base1" class="refresh-btn">🔄 ตรวจสอบสถานะประตู</button>
             </div>
             <button id="start-base1" class="start-btn" disabled>เปิดจดหมายเวท</button>
         </div>
@@ -760,6 +808,7 @@
                 <p>ตัวเลือกที่ 2: คำพูดที่ทำให้รู้สึกผ่อนคลาย</p>
                 <p>10 ข้อแรกมีเวลา 10 วินาที, ข้อ 11-15 มีเวลา 8 วินาที, ข้อ 16-20 มีเวลา 5 วินาที</p>
                 <p id="base2-access-message" class="gate-status gate-closed">ประตูมิติที่ 2 ยังปิดอยู่</p>
+                <button id="refresh-base2" class="refresh-btn">🔄 ตรวจสอบสถานะประตู</button>
             </div>
             <button id="start-base2" class="start-btn" disabled>เริ่มภารกิจที่ 2</button>
         </div>
@@ -856,7 +905,7 @@
         let base1Open = false;
         let base2Open = false;
 
-        // ฟังก์ชันเปลี่ยนหน้าจอ - แก้ไขให้ทำงานถูกต้อง
+        // ฟังก์ชันเปลี่ยนหน้าจอ
         function showScreen(screenId) {
             // ซ่อนทุกหน้าจอ
             const allScreens = [
@@ -882,13 +931,14 @@
                 if (screenId === 'base1-loading' || screenId === 'base2-loading') {
                     updateStartButtons();
                 }
+                
+                // อัพเดทสถานะผู้เล่นในแดชบอร์ดแอดมิน
+                updatePlayerStatus();
             }
         }
 
-        // ฟังก์ชันอัพเดทสถานะปุ่มเริ่มเกม - แก้ไขให้ทำงานถูกต้อง
+        // ฟังก์ชันอัพเดทสถานะปุ่มเริ่มเกม
         function updateStartButtons() {
-            console.log("Updating start buttons - Base1:", base1Open, "Base2:", base2Open);
-            
             // อัพเดทปุ่มเริ่มฐานที่ 1
             const startBase1Button = document.getElementById('start-base1');
             const base1AccessMessage = document.getElementById('base1-access-message');
@@ -898,10 +948,12 @@
                     startBase1Button.disabled = false;
                     base1AccessMessage.textContent = "ประตูมิติที่ 1 เปิดแล้ว!";
                     base1AccessMessage.className = "gate-status gate-open";
+                    startBase1Button.style.animation = "pulse 1.5s infinite";
                 } else {
                     startBase1Button.disabled = true;
                     base1AccessMessage.textContent = "ประตูมิติที่ 1 ยังปิดอยู่";
                     base1AccessMessage.className = "gate-status gate-closed";
+                    startBase1Button.style.animation = "none";
                 }
             }
             
@@ -914,10 +966,63 @@
                     startBase2Button.disabled = false;
                     base2AccessMessage.textContent = "ประตูมิติที่ 2 เปิดแล้ว!";
                     base2AccessMessage.className = "gate-status gate-open";
+                    startBase2Button.style.animation = "pulse 1.5s infinite";
                 } else {
                     startBase2Button.disabled = true;
                     base2AccessMessage.textContent = "ประตูมิติที่ 2 ยังปิดอยู่";
                     base2AccessMessage.className = "gate-status gate-closed";
+                    startBase2Button.style.animation = "none";
+                }
+            }
+        }
+
+        // ฟังก์ชันแจ้งเตือนผู้เล่นเมื่อประตูเปิด
+        function showGateNotification(gateNumber, isOpen) {
+            if (isOpen) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.innerHTML = `
+                    <strong>ประตูมิติที่ ${gateNumber} เปิดแล้ว!</strong>
+                    <br>คุณสามารถเริ่มภารกิจได้แล้ว
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        }
+
+        // ฟังก์ชันอัพเดทสถานะผู้เล่นในแดชบอร์ดแอดมิน
+        function updatePlayerStatus() {
+            const playerStatusElement = document.getElementById('player-status');
+            if (playerStatusElement) {
+                if (playerName) {
+                    let statusText = '';
+                    let statusClass = '';
+                    
+                    if (currentScreen.includes('base1')) {
+                        statusText = 'กำลังเล่นภารกิจที่ 1';
+                        statusClass = 'gate-open';
+                    } else if (currentScreen.includes('base2')) {
+                        statusText = 'กำลังเล่นภารกิจที่ 2';
+                        statusClass = 'gate-open';
+                    } else if (currentScreen === 'player-name') {
+                        statusText = 'รอใส่ชื่อ';
+                        statusClass = 'gate-closed';
+                    } else if (currentScreen.includes('loading')) {
+                        statusText = 'รอเริ่มเกม';
+                        statusClass = 'gate-closed';
+                    } else {
+                        statusText = 'รอเริ่มเกม';
+                        statusClass = 'gate-closed';
+                    }
+                    
+                    playerStatusElement.textContent = `${playerName} - ${statusText}`;
+                    playerStatusElement.className = `gate-status ${statusClass}`;
+                } else {
+                    playerStatusElement.textContent = 'ยังไม่มีผู้เล่น';
+                    playerStatusElement.className = 'gate-status gate-closed';
                 }
             }
         }
@@ -1089,6 +1194,15 @@
             showScreen('ranking-screen');
         }
 
+        // เริ่มต้นระบบตรวจสอบสถานะอัตโนมัติ
+        function startGateStatusPolling() {
+            setInterval(() => {
+                if (currentScreen === 'base1-loading' || currentScreen === 'base2-loading') {
+                    updateStartButtons();
+                }
+            }, 3000);
+        }
+
         // การตั้งค่า Event Listeners
         document.getElementById('host-btn').addEventListener('click', () => {
             showScreen('host-login');
@@ -1126,7 +1240,7 @@
             }
         });
 
-        // ควบคุมประตูฐานที่ 1 - แก้ไขให้ทำงานถูกต้อง
+        // ควบคุมประตูฐานที่ 1
         document.getElementById('open-base1').addEventListener('click', () => {
             base1Open = true;
             document.getElementById('base1-status').textContent = 'เปิด';
@@ -1134,6 +1248,9 @@
             
             // อัพเดทปุ่มเริ่มเกมฐานที่ 1
             updateStartButtons();
+            
+            // แจ้งเตือนผู้เล่น
+            showGateNotification(1, true);
         });
 
         document.getElementById('close-base1').addEventListener('click', () => {
@@ -1145,7 +1262,7 @@
             updateStartButtons();
         });
 
-        // ควบคุมประตูฐานที่ 2 - แก้ไขให้ทำงานถูกต้อง
+        // ควบคุมประตูฐานที่ 2
         document.getElementById('open-base2').addEventListener('click', () => {
             base2Open = true;
             document.getElementById('base2-status').textContent = 'เปิด';
@@ -1153,6 +1270,9 @@
             
             // อัพเดทปุ่มเริ่มเกมฐานที่ 2
             updateStartButtons();
+            
+            // แจ้งเตือนผู้เล่น
+            showGateNotification(2, true);
         });
 
         document.getElementById('close-base2').addEventListener('click', () => {
@@ -1173,6 +1293,10 @@
         });
 
         document.getElementById('show-ranking').addEventListener('click', showRanking);
+
+        // ปุ่มรีเฟรชสถานะ
+        document.getElementById('refresh-base1').addEventListener('click', updateStartButtons);
+        document.getElementById('refresh-base2').addEventListener('click', updateStartButtons);
 
         // จัดการการตอบคำถาม
         document.querySelectorAll('.answer-btn').forEach(button => {
@@ -1210,6 +1334,9 @@
             // ตั้งค่าชื่อผู้ใช้และรหัสผ่านเริ่มต้นเพื่อให้ทดสอบง่าย
             document.getElementById('host-username').value = 'admin';
             document.getElementById('host-password').value = 'admin';
+            
+            // เริ่มต้นระบบตรวจสอบสถานะอัตโนมัติ
+            startGateStatusPolling();
         });
     </script>
 </body>

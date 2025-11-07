@@ -290,6 +290,13 @@
             border: 2px solid #8a6d32;
         }
         
+        .passcode-info {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1.1rem;
+            color: #e0d0a0;
+        }
+        
         /* สไตล์หน้าจอโหลด */
         .loading-screen {
             text-align: center;
@@ -731,11 +738,29 @@
             font-size: 1.1rem;
             display: none;
         }
+        
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
     <!-- เอฟเฟกต์ประกายไฟ -->
     <div id="sparkles-container"></div>
+
+    <!-- ข้อมูลดีบัก (สำหรับตรวจสอบปัญหา) -->
+    <div class="debug-info" id="debug-info" style="display: none;">
+        <div>รหัสผ่านปัจจุบัน: <span id="debug-passcode">-</span></div>
+        <div>รหัสผ่านที่ป้อน: <span id="debug-input">-</span></div>
+    </div>
 
     <!-- หน้าเลือกบทบาท -->
     <div id="role-selection" class="role-selection fade-in">
@@ -777,6 +802,7 @@
                 <h3>จัดการรหัสผ่านเวท</h3>
                 <p>รหัสผ่านเวทปัจจุบัน:</p>
                 <div class="passcode-display" id="current-passcode">-</div>
+                <p class="passcode-info">รหัสผ่านนี้จะใช้ได้จนกว่าจะสร้างรหัสใหม่หรือรีเฟรชหน้า</p>
                 <button id="generate-passcode" class="control-btn generate-btn">สร้างรหัสผ่านเวทใหม่</button>
             </div>
             
@@ -798,6 +824,7 @@
             <div class="dashboard-card fade-in">
                 <h3>จารึกอันดับนักผจญภัย</h3>
                 <button id="show-ranking" class="control-btn ranking-btn">แสดงจารึกอันดับ</button>
+                <button id="toggle-debug" class="control-btn">เปิด/ปิดโหมดดีบัก</button>
             </div>
         </div>
     </div>
@@ -946,6 +973,7 @@
         let timeLeft;
         let playerName = '';
         let currentPasscode = '';
+        let debugMode = false;
 
         // ฟังก์ชันสร้างประกายไฟ
         function createSparkle(x, y) {
@@ -1141,6 +1169,11 @@
             currentPasscode = result;
             document.getElementById('current-passcode').textContent = currentPasscode;
             
+            // อัพเดทข้อมูลดีบัก
+            if (debugMode) {
+                document.getElementById('debug-passcode').textContent = currentPasscode;
+            }
+            
             // เพิ่มประกายไฟเมื่อสร้างพาสโค้ด
             for (let i = 0; i < 5; i++) {
                 setTimeout(() => {
@@ -1202,6 +1235,18 @@
             }
         }
 
+        // ฟังก์ชันเปิด/ปิดโหมดดีบัก
+        function toggleDebugMode() {
+            debugMode = !debugMode;
+            const debugInfo = document.getElementById('debug-info');
+            if (debugMode) {
+                debugInfo.style.display = 'block';
+                document.getElementById('debug-passcode').textContent = currentPasscode;
+            } else {
+                debugInfo.style.display = 'none';
+            }
+        }
+
         // การตั้งค่า Event Listeners
         document.getElementById('host-btn').addEventListener('click', () => {
             showScreen('host-login');
@@ -1218,6 +1263,7 @@
             // ตรวจสอบล็อกอิน (ในเวอร์ชันจริงควรตรวจสอบกับฐานข้อมูล)
             if (username === 'admin' && password === 'admin') {
                 showScreen('admin-dashboard');
+                // สร้างรหัสผ่านทันทีเมื่อล็อกอินสำเร็จ
                 generatePasscode();
             } else {
                 alert('ชื่อผู้ใช้เวทหรือรหัสผ่านเวทไม่ถูกต้อง');
@@ -1234,6 +1280,11 @@
                 this.value = this.value.slice(0, 6);
             }
             
+            // อัพเดทข้อมูลดีบัก
+            if (debugMode) {
+                document.getElementById('debug-input').textContent = this.value;
+            }
+            
             // ซ่อนข้อความผิดพลาดถ้ารหัสผ่านถูกต้อง
             const errorElement = document.getElementById('passcode-error');
             if (validatePasscode(this.value)) {
@@ -1246,7 +1297,18 @@
         document.getElementById('join-game').addEventListener('click', () => {
             const passcode = document.getElementById('passcode-input').value;
             
+            // อัพเดทข้อมูลดีบัก
+            if (debugMode) {
+                document.getElementById('debug-input').textContent = passcode;
+            }
+            
             if (validatePasscode(passcode)) {
+                // ตรวจสอบว่ามีการสร้างรหัสผ่านแล้วหรือไม่
+                if (!currentPasscode || currentPasscode === '-') {
+                    alert('ยังไม่มีรหัสผ่านเวท กรุณาให้โฮสสร้างรหัสผ่านก่อน');
+                    return;
+                }
+                
                 if (passcode === currentPasscode) {
                     playerName = `นักผจญภัยแห่งโชคชะตา ${Math.floor(Math.random() * 1000)}`;
                     showScreen('base1-loading');
@@ -1262,6 +1324,9 @@
                     }
                 } else {
                     alert('รหัสผ่านเวทไม่ถูกต้อง');
+                    if (debugMode) {
+                        console.log('รหัสผ่านที่ป้อน:', passcode, 'รหัสผ่านปัจจุบัน:', currentPasscode);
+                    }
                 }
             } else {
                 alert('รหัสผ่านเวทต้องเป็นตัวเลข 6 หลักเท่านั้น');
@@ -1319,6 +1384,8 @@
         });
 
         document.getElementById('show-ranking').addEventListener('click', showRanking);
+
+        document.getElementById('toggle-debug').addEventListener('click', toggleDebugMode);
 
         // จัดการการตอบคำถาม
         document.querySelectorAll('.answer-btn').forEach(button => {

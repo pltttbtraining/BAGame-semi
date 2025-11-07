@@ -275,6 +275,21 @@
             box-shadow: 0 0 10px rgba(93, 74, 26, 0.5);
         }
         
+        /* สไตล์การแสดงรหัสผ่านในแดชบอร์ด */
+        .passcode-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            letter-spacing: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #8a6d32;
+        }
+        
         /* สไตล์หน้าจอโหลด */
         .loading-screen {
             text-align: center;
@@ -707,6 +722,15 @@
             pointer-events: none;
             animation: sparkle 0.8s forwards;
         }
+        
+        /* สไตล์สำหรับข้อความผิดพลาด */
+        .error-message {
+            color: #ff5555;
+            text-shadow: 0 0 5px #ff0000;
+            margin-top: 10px;
+            font-size: 1.1rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -751,7 +775,8 @@
         <div class="dashboard-cards">
             <div class="dashboard-card fade-in">
                 <h3>จัดการรหัสผ่านเวท</h3>
-                <p>รหัสผ่านเวทปัจจุบัน: <span id="current-passcode">-</span></p>
+                <p>รหัสผ่านเวทปัจจุบัน:</p>
+                <div class="passcode-display" id="current-passcode">-</div>
                 <button id="generate-passcode" class="control-btn generate-btn">สร้างรหัสผ่านเวทใหม่</button>
             </div>
             
@@ -781,8 +806,9 @@
     <div id="player-passcode" class="player-passcode hidden">
         <div class="ancient-scroll fade-in">
             <h2>กรอกรหัสผ่านเวท</h2>
-            <p>ป้อนรหัสผ่านเวทที่ได้รับจากผู้ควบคุม</p>
-            <input type="text" id="passcode-input" class="passcode-input" placeholder="กรอกรหัสผ่านเวท">
+            <p>ป้อนรหัสผ่านเวทที่เป็นตัวเลข 6 หลัก</p>
+            <input type="text" id="passcode-input" class="passcode-input" placeholder="กรอกรหัสผ่านเวท (ตัวเลข 6 หลัก)" maxlength="6" pattern="[0-9]*" inputmode="numeric">
+            <div class="error-message" id="passcode-error">รหัสผ่านเวทต้องเป็นตัวเลข 6 หลักเท่านั้น</div>
             <br>
             <button id="join-game" class="submit-btn">เริ่มการผจญภัย</button>
         </div>
@@ -1105,12 +1131,12 @@
             }, 1000);
         }
 
-        // ฟังก์ชันสร้าง Passcode
+        // ฟังก์ชันสร้าง Passcode (เฉพาะตัวเลข)
         function generatePasscode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            const digits = '0123456789';
             let result = '';
             for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
+                result += digits.charAt(Math.floor(Math.random() * digits.length));
             }
             currentPasscode = result;
             document.getElementById('current-passcode').textContent = currentPasscode;
@@ -1126,6 +1152,13 @@
             }
             
             alert(`รหัสผ่านเวทใหม่: ${currentPasscode}`);
+        }
+
+        // ฟังก์ชันตรวจสอบรหัสผ่าน
+        function validatePasscode(passcode) {
+            // ตรวจสอบว่าเป็นตัวเลข 6 หลัก
+            const regex = /^\d{6}$/;
+            return regex.test(passcode);
         }
 
         // ฟังก์ชันแสดงอันดับ
@@ -1191,24 +1224,47 @@
             }
         });
 
+        // จำกัด input ให้เป็นตัวเลขเท่านั้น
+        document.getElementById('passcode-input').addEventListener('input', function(e) {
+            // เอาเฉพาะตัวเลข
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // ตรวจสอบความยาว
+            if (this.value.length > 6) {
+                this.value = this.value.slice(0, 6);
+            }
+            
+            // ซ่อนข้อความผิดพลาดถ้ารหัสผ่านถูกต้อง
+            const errorElement = document.getElementById('passcode-error');
+            if (validatePasscode(this.value)) {
+                errorElement.style.display = 'none';
+            } else {
+                errorElement.style.display = 'block';
+            }
+        });
+
         document.getElementById('join-game').addEventListener('click', () => {
             const passcode = document.getElementById('passcode-input').value;
             
-            if (passcode === currentPasscode) {
-                playerName = `นักผจญภัยแห่งโชคชะตา ${Math.floor(Math.random() * 1000)}`;
-                showScreen('base1-loading');
-                
-                // เพิ่มประกายไฟเมื่อเข้าร่วมเกม
-                for (let i = 0; i < 5; i++) {
-                    setTimeout(() => {
-                        createSparkle(
-                            Math.random() * window.innerWidth,
-                            Math.random() * window.innerHeight
-                        );
-                    }, i * 200);
+            if (validatePasscode(passcode)) {
+                if (passcode === currentPasscode) {
+                    playerName = `นักผจญภัยแห่งโชคชะตา ${Math.floor(Math.random() * 1000)}`;
+                    showScreen('base1-loading');
+                    
+                    // เพิ่มประกายไฟเมื่อเข้าร่วมเกม
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            createSparkle(
+                                Math.random() * window.innerWidth,
+                                Math.random() * window.innerHeight
+                            );
+                        }, i * 200);
+                    }
+                } else {
+                    alert('รหัสผ่านเวทไม่ถูกต้อง');
                 }
             } else {
-                alert('รหัสผ่านเวทไม่ถูกต้อง');
+                alert('รหัสผ่านเวทต้องเป็นตัวเลข 6 หลักเท่านั้น');
             }
         });
 

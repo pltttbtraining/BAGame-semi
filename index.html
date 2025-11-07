@@ -868,7 +868,7 @@
         let timerInterval;
         let timeLeft;
         let playerName = '';
-        let players = [];
+        let players = JSON.parse(localStorage.getItem('treasureGamePlayers')) || [];
 
         // ฟังก์ชันเปลี่ยนหน้าจอ
         function showScreen(screenId) {
@@ -894,6 +894,9 @@
                 
                 // อัพเดทสถานะผู้เล่นในแดชบอร์ดแอดมิน
                 updatePlayerStatus();
+                
+                // บันทึกสถานะปัจจุบันลง localStorage
+                localStorage.setItem('treasureGameCurrentScreen', screenId);
             }
         }
 
@@ -913,23 +916,29 @@
         function updatePlayerStatus() {
             const playerStatusElement = document.getElementById('player-status');
             if (playerStatusElement) {
-                if (playerName) {
+                const savedPlayerName = localStorage.getItem('treasureGamePlayerName');
+                const savedScreen = localStorage.getItem('treasureGameCurrentScreen');
+                
+                if (savedPlayerName) {
                     let statusText = '';
                     let statusClass = '';
                     
-                    if (currentScreen.includes('base1-game')) {
+                    if (savedScreen === 'base1-game') {
                         statusText = 'กำลังเล่นภารกิจที่ 1';
                         statusClass = 'game-playing';
-                    } else if (currentScreen.includes('base2-game')) {
+                    } else if (savedScreen === 'base2-game') {
                         statusText = 'กำลังเล่นภารกิจที่ 2';
                         statusClass = 'game-playing';
-                    } else if (currentScreen === 'player-name') {
+                    } else if (savedScreen === 'player-name') {
                         statusText = 'รอใส่ชื่อ';
                         statusClass = 'game-waiting';
-                    } else if (currentScreen.includes('loading')) {
-                        statusText = 'รอเริ่มเกม';
+                    } else if (savedScreen === 'base1-loading') {
+                        statusText = 'รอเริ่มเกมภารกิจที่ 1';
                         statusClass = 'game-waiting';
-                    } else if (currentScreen.includes('score')) {
+                    } else if (savedScreen === 'base2-loading') {
+                        statusText = 'รอเริ่มเกมภารกิจที่ 2';
+                        statusClass = 'game-waiting';
+                    } else if (savedScreen && savedScreen.includes('score')) {
                         statusText = 'เสร็จสิ้นภารกิจ';
                         statusClass = 'game-playing';
                     } else {
@@ -937,7 +946,7 @@
                         statusClass = 'game-waiting';
                     }
                     
-                    playerStatusElement.textContent = `${playerName} - ${statusText}`;
+                    playerStatusElement.textContent = `${savedPlayerName} - ${statusText}`;
                     playerStatusElement.className = `game-status ${statusClass}`;
                 } else {
                     playerStatusElement.textContent = 'ยังไม่มีผู้เล่น';
@@ -948,14 +957,62 @@
 
         // ฟังก์ชันเริ่มต้นเกมฐานที่ 1
         function startBase1Game() {
-            currentQuestionIndex = 0;
-            playerScoreBase1 = 0;
-            correctAnswersBase1 = 0;
-            showScreen('base1-game');
-            showNextQuestionBase1();
+            // บันทึกคำสั่งเริ่มเกมลง localStorage
+            localStorage.setItem('treasureGameCommand', 'start-base1');
+            localStorage.setItem('treasureGameCommandTime', Date.now());
             
             // แจ้งเตือนผู้เล่น
-            showNotification("แอดมินเริ่มภารกิจที่ 1 แล้ว!");
+            showNotification("เริ่มภารกิจที่ 1 แล้ว!");
+            
+            // อัพเดทสถานะ
+            updatePlayerStatus();
+        }
+
+        // ฟังก์ชันเริ่มต้นเกมฐานที่ 2
+        function startBase2Game() {
+            // บันทึกคำสั่งเริ่มเกมลง localStorage
+            localStorage.setItem('treasureGameCommand', 'start-base2');
+            localStorage.setItem('treasureGameCommandTime', Date.now());
+            
+            // แจ้งเตือนผู้เล่น
+            showNotification("เริ่มภารกิจที่ 2 แล้ว!");
+            
+            // อัพเดทสถานะ
+            updatePlayerStatus();
+        }
+
+        // ฟังก์ชันตรวจสอบคำสั่งจากแอดมิน
+        function checkAdminCommands() {
+            const command = localStorage.getItem('treasureGameCommand');
+            const commandTime = localStorage.getItem('treasureGameCommandTime');
+            
+            // ตรวจสอบว่ามีคำสั่งใหม่ภายใน 10 วินาทีที่ผ่านมาหรือไม่
+            if (command && commandTime && (Date.now() - parseInt(commandTime)) < 10000) {
+                // ลบคำสั่งเพื่อไม่ให้ประมวลผลซ้ำ
+                localStorage.removeItem('treasureGameCommand');
+                
+                if (command === 'start-base1' && currentScreen === 'base1-loading') {
+                    // เริ่มเกมฐานที่ 1
+                    currentQuestionIndex = 0;
+                    playerScoreBase1 = 0;
+                    correctAnswersBase1 = 0;
+                    showScreen('base1-game');
+                    showNextQuestionBase1();
+                    
+                    // แจ้งเตือนผู้เล่น
+                    showNotification("แอดมินเริ่มภารกิจที่ 1 แล้ว!");
+                } else if (command === 'start-base2' && currentScreen === 'base2-loading') {
+                    // เริ่มเกมฐานที่ 2
+                    currentQuestionIndex = 0;
+                    playerScoreBase2 = 0;
+                    correctAnswersBase2 = 0;
+                    showScreen('base2-game');
+                    showNextQuestionBase2();
+                    
+                    // แจ้งเตือนผู้เล่น
+                    showNotification("แอดมินเริ่มภารกิจที่ 2 แล้ว!");
+                }
+            }
         }
 
         // แสดงคำถามถัดไปในฐานที่ 1
@@ -987,18 +1044,6 @@
             document.getElementById('base1-correct').textContent = correctAnswersBase1;
             document.getElementById('score-player-name').textContent = playerName;
             showScreen('base1-score');
-        }
-
-        // ฟังก์ชันเริ่มต้นเกมฐานที่ 2
-        function startBase2Game() {
-            currentQuestionIndex = 0;
-            playerScoreBase2 = 0;
-            correctAnswersBase2 = 0;
-            showScreen('base2-game');
-            showNextQuestionBase2();
-            
-            // แจ้งเตือนผู้เล่น
-            showNotification("แอดมินเริ่มภารกิจที่ 2 แล้ว!");
         }
 
         // แสดงคำถามถัดไปในฐานที่ 2
@@ -1076,6 +1121,9 @@
                 players[playerIndex].score2 = playerScoreBase2;
                 players[playerIndex].total = playerScoreBase1 + playerScoreBase2;
             }
+            
+            // บันทึกลง localStorage
+            localStorage.setItem('treasureGamePlayers', JSON.stringify(players));
         }
 
         // ฟังก์ชันแสดงอันดับ
@@ -1125,6 +1173,9 @@
             // ตรวจสอบล็อกอิน
             if (username === 'admin' && password === 'admin') {
                 showScreen('admin-dashboard');
+                
+                // เริ่มต้นการอัพเดทสถานะผู้เล่น
+                setInterval(updatePlayerStatus, 2000);
             } else {
                 alert('ชื่อผู้ใช้เวทหรือรหัสผ่านเวทไม่ถูกต้อง');
             }
@@ -1136,36 +1187,27 @@
             if (name) {
                 playerName = name;
                 
+                // บันทึกชื่อผู้เล่นลง localStorage
+                localStorage.setItem('treasureGamePlayerName', playerName);
+                
                 // แสดงชื่อผู้เล่นในเกม
                 document.getElementById('current-player-name').textContent = playerName;
                 document.getElementById('current-player-name2').textContent = playerName;
                 
                 showScreen('base1-loading');
                 
-                // แจ้งเตือนแอดมิน
-                showNotification(`ผู้เล่น ${playerName} พร้อมเริ่มเกมแล้ว!`);
+                // เริ่มต้นการตรวจสอบคำสั่งจากแอดมิน
+                setInterval(checkAdminCommands, 1000);
             } else {
                 alert('กรุณาระบุชื่อของคุณ');
             }
         });
 
         // แอดมินเริ่มเกมฐานที่ 1
-        document.getElementById('start-base1').addEventListener('click', () => {
-            if (playerName && currentScreen === 'base1-loading') {
-                startBase1Game();
-            } else {
-                alert('ไม่มีผู้เล่นที่พร้อมเริ่มเกมฐานที่ 1');
-            }
-        });
+        document.getElementById('start-base1').addEventListener('click', startBase1Game);
 
         // แอดมินเริ่มเกมฐานที่ 2
-        document.getElementById('start-base2').addEventListener('click', () => {
-            if (playerName && currentScreen === 'base2-loading') {
-                startBase2Game();
-            } else {
-                alert('ไม่มีผู้เล่นที่พร้อมเริ่มเกมฐานที่ 2');
-            }
-        });
+        document.getElementById('start-base2').addEventListener('click', startBase2Game);
 
         document.getElementById('go-to-base2').addEventListener('click', () => {
             showScreen('base2-loading');
@@ -1209,6 +1251,26 @@
             // ตั้งค่าชื่อผู้ใช้และรหัสผ่านเริ่มต้นเพื่อให้ทดสอบง่าย
             document.getElementById('host-username').value = 'admin';
             document.getElementById('host-password').value = 'admin';
+            
+            // โหลดข้อมูลผู้เล่นจาก localStorage
+            const savedPlayers = localStorage.getItem('treasureGamePlayers');
+            if (savedPlayers) {
+                players = JSON.parse(savedPlayers);
+            }
+            
+            // โหลดชื่อผู้เล่นจาก localStorage
+            const savedPlayerName = localStorage.getItem('treasureGamePlayerName');
+            if (savedPlayerName) {
+                playerName = savedPlayerName;
+                document.getElementById('current-player-name').textContent = playerName;
+                document.getElementById('current-player-name2').textContent = playerName;
+            }
+            
+            // โหลดหน้าจอปัจจุบันจาก localStorage
+            const savedScreen = localStorage.getItem('treasureGameCurrentScreen');
+            if (savedScreen) {
+                showScreen(savedScreen);
+            }
         });
     </script>
 </body>

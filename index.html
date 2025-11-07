@@ -49,13 +49,6 @@
             position: relative;
         }
         
-        /* ปรับปรุงการแสดงผลสำหรับมือถือ */
-        @media (max-width: 768px) {
-            .mobile-container {
-                padding: 10px;
-            }
-        }
-        
         /* สไตล์สำหรับหน้าเลือกบทบาท */
         .role-selection {
             display: flex;
@@ -660,11 +653,11 @@
                 <h2>ห้องแห่งความรู้ลับ</h2>
                 <div class="form-group">
                     <label for="host-username">ชื่อผู้ใช้เวท:</label>
-                    <input type="text" id="host-username" placeholder="กรอกชื่อผู้ใช้เวท">
+                    <input type="text" id="host-username" placeholder="กรอกชื่อผู้ใช้เวท" value="admin">
                 </div>
                 <div class="form-group">
                     <label for="host-password">รหัสผ่านเวท:</label>
-                    <input type="password" id="host-password" placeholder="กรอกรหัสผ่านเวท">
+                    <input type="password" id="host-password" placeholder="กรอกรหัสผ่านเวท" value="admin">
                 </div>
                 <button id="host-login-btn" class="submit-btn">เปิดประตูเวท</button>
             </div>
@@ -849,7 +842,6 @@
 
         // ตัวแปรสถานะเกม
         let currentScreen = 'role-selection';
-        let currentBase = 0;
         let playerScoreBase1 = 0;
         let playerScoreBase2 = 0;
         let correctAnswersBase1 = 0;
@@ -860,35 +852,43 @@
         let playerName = '';
         let players = [];
         
-        // สถานะการเปิดประตู
+        // สถานะการเปิดประตู - ตั้งค่าเริ่มต้นเป็น false
         let base1Open = false;
         let base2Open = false;
 
-        // ฟังก์ชันเปลี่ยนหน้าจอ
+        // ฟังก์ชันเปลี่ยนหน้าจอ - แก้ไขให้ทำงานถูกต้อง
         function showScreen(screenId) {
-            document.querySelectorAll('div[id$="-selection"], div[id$="-login"], div[id$="-dashboard"], div[id$="-name"], div[id$="-loading"], div[id$="-game"], div[id$="-score"], div[id$="-screen"]').forEach(screen => {
-                screen.classList.add('hidden');
+            // ซ่อนทุกหน้าจอ
+            const allScreens = [
+                'role-selection', 'host-login', 'admin-dashboard', 
+                'player-name', 'base1-loading', 'base1-game', 'base1-score',
+                'base2-loading', 'base2-game', 'base2-score', 'ranking-screen'
+            ];
+            
+            allScreens.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.add('hidden');
+                }
             });
             
-            document.getElementById(screenId).classList.remove('hidden');
-            currentScreen = screenId;
-            
-            // อัพเดทสถานะปุ่มเริ่มเกมตามสถานะประตู
-            updateStartButtons();
-            
-            // ป้องกันการสไลด์บน iOS
-            if (screenId !== 'role-selection') {
-                document.body.classList.add('prevent-scroll');
-            } else {
-                document.body.classList.remove('prevent-scroll');
+            // แสดงหน้าจอที่ต้องการ
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.remove('hidden');
+                currentScreen = screenId;
+                
+                // อัพเดทสถานะปุ่มเริ่มเกมเมื่อเปลี่ยนไปยังหน้าจอโหลด
+                if (screenId === 'base1-loading' || screenId === 'base2-loading') {
+                    updateStartButtons();
+                }
             }
-            
-            // โฟกัสที่คอนเทนเนอร์หลักสำหรับการเข้าถึง
-            document.getElementById('mobile-container').focus();
         }
 
-        // ฟังก์ชันอัพเดทสถานะปุ่มเริ่มเกม
+        // ฟังก์ชันอัพเดทสถานะปุ่มเริ่มเกม - แก้ไขให้ทำงานถูกต้อง
         function updateStartButtons() {
+            console.log("Updating start buttons - Base1:", base1Open, "Base2:", base2Open);
+            
             // อัพเดทปุ่มเริ่มฐานที่ 1
             const startBase1Button = document.getElementById('start-base1');
             const base1AccessMessage = document.getElementById('base1-access-message');
@@ -1126,7 +1126,7 @@
             }
         });
 
-        // ควบคุมประตูฐานที่ 1
+        // ควบคุมประตูฐานที่ 1 - แก้ไขให้ทำงานถูกต้อง
         document.getElementById('open-base1').addEventListener('click', () => {
             base1Open = true;
             document.getElementById('base1-status').textContent = 'เปิด';
@@ -1145,7 +1145,7 @@
             updateStartButtons();
         });
 
-        // ควบคุมประตูฐานที่ 2
+        // ควบคุมประตูฐานที่ 2 - แก้ไขให้ทำงานถูกต้อง
         document.getElementById('open-base2').addEventListener('click', () => {
             base2Open = true;
             document.getElementById('base2-status').textContent = 'เปิด';
@@ -1199,22 +1199,6 @@
             });
         });
 
-        // ป้องกันการย่อ/ขยายหน้าจอบนมือถือ
-        document.addEventListener('touchstart', function(e) {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(e) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
-
         // เริ่มต้นระบบ
         document.addEventListener('DOMContentLoaded', function() {
             // ตั้งค่า viewport สำหรับมือถือ
@@ -1223,8 +1207,9 @@
                 viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
             }
             
-            // โฟกัสที่คอนเทนเนอร์หลัก
-            document.getElementById('mobile-container').focus();
+            // ตั้งค่าชื่อผู้ใช้และรหัสผ่านเริ่มต้นเพื่อให้ทดสอบง่าย
+            document.getElementById('host-username').value = 'admin';
+            document.getElementById('host-password').value = 'admin';
         });
     </script>
 </body>
